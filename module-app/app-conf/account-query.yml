@@ -1,0 +1,133 @@
+spring:
+  application:
+    name: account-query
+  jpa:
+    # postgreSQL jpa settings
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+    # MySQL jpa settings
+  #    database-platform: org.hibernate.dialect.MySQL8Dialect
+  #    show-sql: true
+  #    hibernate:
+  #      ddl-auto: update
+  datasource:
+    # postgreSQL datasource settings
+    initialization-mode: always
+    platform: postgres
+    url: jdbc:postgresql://account-postgres:5432/bankaccount
+    username: postgres
+    password: techbankrootpsw
+    #MySQL datasource settings
+  #    url: jdbc:mysql://localhost:3306/bankAccount?createDatabaseIfNotExist=true
+  #    username: root
+  #    password: techbankRootPsw
+  kafka:
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+    consumer:
+      bootstrap-servers: bitnami-kafka:9092
+      group-id: bankaccConsumer
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: '*'
+  output:
+    ansi:
+      enabled: ALWAYS
+  keycloak:
+      server-url: http://keycloak-server:8080
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://keycloak.greeta.net/realms/bank-realm
+          jwk-set-uri: ${spring.keycloak.server-url}/realms/bank-realm/protocol/openid-connect/certs
+
+kafka-config:
+  bootstrap-servers: bitnami-kafka:9092
+  num-of-partitions: 1
+  replication-factor: 1
+
+kafka-consumer-config:
+  key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+  group-id: bankaccConsumer
+  auto-offset-reset: earliest
+  batch-listener: true
+  auto-startup: true
+  concurrency-level: 3
+  session-timeout-ms: 10000
+  heartbeat-interval-ms: 3000
+  max-poll-interval-ms: 300000
+  max-poll-records: 500
+  max-partition-fetch-bytes-default: 1048576
+  max-partition-fetch-bytes-boost-factor: 1
+  poll-timeout-ms: 150
+  properties:
+  spring:
+    json:
+      trusted:
+        packages: '*'
+
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
+    console: "%d{yyyy-MM-dd HH:mm:ss} ${LOG_LEVEL_PATTERN:-%5p} %m%n"
+  level:
+    org.springframework.cloud.kubernetes: TRACE
+    org.springframework.security: DEBUG
+
+info:
+  system: Account Query Service
+
+jwt:
+  auth:
+    converter:
+      resource-id: bank-app
+      principal-attribute: preferred_username
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: bindings, configprops, env, flyway, functions, health, heapdump, info, loggers, mappings, prometheus
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+
+server:
+  forward-headers-strategy: framework
+
+openapi:
+  oauthflow:
+    authServerUrl: https://keycloak.greeta.net
+    realm: bank-realm
+
+account-app:
+  base-url: https://account.greeta.net
+  redirect-url: ${account-app.base-url}
+
+bank-app:
+  base-url: https://bank.greeta.net
+  redirect-url: ${bank-app.base-url}

@@ -1,0 +1,118 @@
+spring:
+  application:
+    name: gateway
+  config:
+    import: configtree:/workspace/secrets/*/
+  cloud:
+    bootstrap:
+      enabled: true
+    loadbalancer:
+      ribbon:
+        enabled: false
+    gateway:
+      default-filters:
+        - SaveSession
+        - TokenRelay
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin Access-Control-Request-Headers, RETAIN_FIRST
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: employee
+          uri: http://employee:8080
+          predicates:
+            - Path=/employee/**
+          filters:
+            - RewritePath=/employee/(?<path>.*), /$\{path}
+        - id: account-cmd
+          uri: http://account-cmd:8080
+          predicates:
+            - Path=/account-cmd/**
+          filters:
+            - RewritePath=/account-cmd/(?<path>.*), /$\{path}
+        - id: account-query
+          uri: http://account-query:8080
+          predicates:
+            - Path=/account-query/**
+          filters:
+            - RewritePath=/account-query/(?<path>.*), /$\{path}            
+        - id: bank
+          uri: http://bank:8080
+          predicates:
+            - Path=/bank/**
+          filters:
+            - RewritePath=/bank/(?<path>.*), /$\{path}
+  keycloak:
+      server-url: http://keycloak-server:8080
+
+  redis:
+    connect-timeout: 2s
+    host: gateway-redis
+    port: 6379
+    timeout: 1s
+  session:
+    store-type: redis
+    timeout: 10m
+    redis:
+      namespace: bank:gateway
+  security:
+    oauth2: 
+      resourceserver:
+        jwt:
+          issuer-uri: https://keycloak.greeta.net/realms/bank-realm
+          jwk-set-uri: ${spring.keycloak.server-url}/realms/bank-realm/protocol/openid-connect/certs
+       
+
+jwt:
+  auth:
+    converter:
+      resource-id: bank-app
+      principal-attribute: preferred_username
+
+account-app:
+  base-url: https://account.greeta.net
+  redirect-url: ${account-app.base-url}
+
+bank-app:
+  base-url: https://bank.greeta.net
+  redirect-url: ${bank-app.base-url}/dashboard
+
+logging:
+  pattern: 
+    console: "%d{yyyy-MM-dd HH:mm:ss} ${LOG_LEVEL_PATTERN:-%5p} %m%n"
+
+
+server.forward-headers-strategy: framework
+
+springdoc:
+  enable-native-support: true
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /
+    config-url: /v3/api-docs/swagger-config
+    urls:
+      - url: /v3/api-docs
+        name: API Gateway Service
+        primaryName: API Gateway Service
+      - url: /account-cmd/v3/api-docs
+        name: Account Command Service
+        primaryName: Account Command Service
+      - url: /account-query/v3/api-docs
+        name: Account Query Service
+        primaryName: Account Query Service        
+      - url: /employee/v3/api-docs
+        name: Employee Service
+        primaryName: Employee Service
+      - url: /bank/v3/api-docs
+        name: Bank Service
+        primaryName: Bank Service
