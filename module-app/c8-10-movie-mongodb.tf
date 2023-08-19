@@ -19,14 +19,30 @@ resource "kubernetes_deployment_v1" "movies_mongodb_deployment" {
           app = "movies-mongodb"
         }
       }
-      spec {       
+      spec {  
+
+        volume {
+          name = "persistent-storage"    
+          persistent_volume_claim {
+            claim_name = kubernetes_persistent_volume_claim_v1.efs_mongodb_pvc.metadata[0].name 
+          } 
+        }
+
+
         container {
           name = "movies-mongodb"
           image = "mongo:6.0.4"
           port {
             container_port = 27017
             name = "mongodb"
-          }         
+          }
+
+          volume_mount {
+            name       = "persistent-storage"
+            mount_path = "/data/db"
+          }   
+
+
         }
       }
     }      

@@ -25,10 +25,19 @@ resource "kubernetes_deployment_v1" "keycloak_postgres_deployment" {
           config_map {
             name = kubernetes_config_map_v1.keycloak_postgres_config_map.metadata.0.name 
           }
-        }        
+        } 
+
+        volume {
+          name = "persistent-storage"    
+          persistent_volume_claim {
+            claim_name = kubernetes_persistent_volume_claim_v1.efs_keycloak_pvc.metadata[0].name 
+          } 
+        }           
+
+
         container {
           name = "keycloak-postgres"
-          image = "postgres:latest"
+          image = "postgres:15.3"
           port {
             container_port = 5432
             name = "postgres"
@@ -37,6 +46,23 @@ resource "kubernetes_deployment_v1" "keycloak_postgres_deployment" {
             name = "POSTGRES_PASSWORD"
             value = "postgres"
           }
+
+          env {
+            name  = "PGDATA"
+            value = "/var/lib/postgresql/data/pgdata"
+          }  
+
+          readiness_probe {
+            exec {
+              command = ["pg_isready", "-U", "postgres"]
+            }
+          }
+
+          volume_mount {
+            name       = "persistent-storage"
+            mount_path = "/var/lib/postgresql/data"
+          }            
+
           volume_mount {
             name = "keycloak-postgres-dbcreation-script"
             mount_path = "/docker-entrypoint-initdb.d"
