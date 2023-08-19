@@ -1,0 +1,27 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://movies-mongodb:27017/moviesdb
+
+  keycloak:
+      server-url: http://keycloak-server:8080
+  security:
+    oauth2:
+      resourceserver:  
+        jwt:
+          issuer-uri: https://keycloak.greeta.net/realms/movie-realm
+          jwk-set-uri: ${spring.keycloak.server-url}/realms/movie-realm/protocol/openid-connect/certs
+
+server:
+  forward-headers-strategy: framework
+
+jwt:
+  auth:
+    converter:
+      resource-id: movie-app
+      principal-attribute: preferred_username
+
+openapi:
+  oauthflow:
+    authServerUrl: https://keycloak.greeta.net
+    realm: movie-realm

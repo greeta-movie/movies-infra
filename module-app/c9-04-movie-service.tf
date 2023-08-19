@@ -1,22 +1,22 @@
-resource "kubernetes_config_map_v1" "bank" {
+resource "kubernetes_config_map_v1" "movie" {
   metadata {
-    name      = "bank"
+    name      = "movie"
     labels = {
-      app = "bank"
+      app = "movie"
     }
   }
 
   data = {
-    "application.yml" = file("${path.module}/app-conf/bank.yml")
+    "application.yml" = file("${path.module}/app-conf/movie.yml")
   }
 }
 
-resource "kubernetes_deployment_v1" "bank_deployment" {
-  depends_on = [kubernetes_deployment_v1.bank_mysql_deployment]
+resource "kubernetes_deployment_v1" "movie_deployment" {
+  depends_on = [kubernetes_deployment_v1.movies_mongodb_deployment]
   metadata {
-    name = "bank"
+    name = "movie"
     labels = {
-      app = "bank"
+      app = "movie"
     }
   }
  
@@ -24,13 +24,13 @@ resource "kubernetes_deployment_v1" "bank_deployment" {
     replicas = 1
     selector {
       match_labels = {
-        app = "bank"
+        app = "movie"
       }
     }
     template {
       metadata {
         labels = {
-          app = "bank"
+          app = "movie"
         }
         annotations = {
           "prometheus.io/scrape" = "true"
@@ -39,16 +39,19 @@ resource "kubernetes_deployment_v1" "bank_deployment" {
         }        
       }
       spec {
-        service_account_name = "spring-cloud-kubernetes"        
+        service_account_name = "spring-cloud-kubernetes"      
         
         container {
-          image = "ghcr.io/greeta-bank/bank-service:2ce59872450fa6c6464811d2293c6c099399b770"
-          name  = "bank"
+          image = "ghcr.io/greeta-movie/movie-service:40d9096d0614d264fb5dd9c603e73a960a5df336"
+          name  = "movie"
           image_pull_policy = "Always"
           port {
             container_port = 8080
           }
-
+          env {
+            name = "SPRING_DATA_MONGODB_URI"
+            value = "mongodb://movies-mongodb:27017/moviesdb"
+          }            
           env {
             name  = "SPRING_CLOUD_BOOTSTRAP_ENABLED"
             value = "true"
@@ -66,7 +69,7 @@ resource "kubernetes_deployment_v1" "bank_deployment" {
 
           env {
             name  = "OTEL_SERVICE_NAME"
-            value = "bank"
+            value = "movie"
           }
 
           env {
@@ -78,19 +81,6 @@ resource "kubernetes_deployment_v1" "bank_deployment" {
             name  = "OTEL_METRICS_EXPORTER"
             value = "none"
           }
-
-          env {
-            name = "SPRING_DATASOURCE_URL"
-            value = "jdbc:mysql://bank-mysql:3306/eazybank"
-          }
-          env {
-            name = "SPRING_DATASOURCE_PASSWORD"
-            value = "dbpassword11"
-          }
-          env {
-            name = "SPRING_SQL_INIT_MODE"
-            value = "ALWAYS"
-          }           
 
           # resources {
           #   requests = {
@@ -127,17 +117,17 @@ resource "kubernetes_deployment_v1" "bank_deployment" {
           #   }
           #   initial_delay_seconds = 20
           #   period_seconds        = 15
-          # }        
-
+          # }  
+         
         }
       }
     }
   }
 }
 
-resource "kubernetes_horizontal_pod_autoscaler_v1" "bank_hpa" {
+resource "kubernetes_horizontal_pod_autoscaler_v1" "movie_hpa" {
   metadata {
-    name = "bank-hpa"
+    name = "movie-hpa"
   }
   spec {
     max_replicas = 2
@@ -145,23 +135,23 @@ resource "kubernetes_horizontal_pod_autoscaler_v1" "bank_hpa" {
     scale_target_ref {
       api_version = "apps/v1"
       kind = "Deployment"
-      name = kubernetes_deployment_v1.bank_deployment.metadata[0].name 
+      name = kubernetes_deployment_v1.movie_deployment.metadata[0].name 
     }
     target_cpu_utilization_percentage = 70
   }
 }
 
-resource "kubernetes_service_v1" "bank_service" {
+resource "kubernetes_service_v1" "movie_service" {
   metadata {
-    name      = "bank"
+    name = "movie"
     labels = {
-      app        = "bank"
+      app = "movie"
       spring-boot = "true"
     }
   }
   spec {
     selector = {
-      app = "bank"
+      app = "movie"
     }
     port {
       port = 8080

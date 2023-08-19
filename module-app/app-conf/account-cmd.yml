@@ -20,8 +20,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://keycloak.greeta.net/realms/bank-realm
-          jwk-set-uri: ${spring.keycloak.server-url}/realms/bank-realm/protocol/openid-connect/certs
+          issuer-uri: https://keycloak.greeta.net/realms/movie-realm
+          jwk-set-uri: ${spring.keycloak.server-url}/realms/movie-realm/protocol/openid-connect/certs
 
 kafka-config:
   bootstrap-servers: bitnami-kafka:9092
@@ -53,7 +53,7 @@ info:
 jwt:
   auth:
     converter:
-      resource-id: bank-app
+      resource-id: movie-app
       principal-attribute: preferred_username
 
 management:
@@ -85,12 +85,4 @@ server:
 openapi:
   oauthflow:
     authServerUrl: https://keycloak.greeta.net
-    realm: bank-realm
-
-account-app:
-  base-url: https://account.greeta.net
-  redirect-url: ${account-app.base-url}
-
-bank-app:
-  base-url: https://bank.greeta.net
-  redirect-url: ${bank-app.base-url}
+    realm: movie-realm

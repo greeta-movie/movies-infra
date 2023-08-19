@@ -4,13 +4,7 @@ resource "kubernetes_ingress_v1" "ingress" {
     name = "simple-fanout-ingress"
     annotations = {
       "nginx.ingress.kubernetes.io/rewrite-target" = "/"
-      "kubernetes.io/ingress.class" =  "nginx"
-      # "nginx.ingress.kubernetes.io/proxy-set-header" = <<EOF
-      #   Host $host;
-      #   X-Real-IP $remote_addr;
-      #   X-Forwarded-For $proxy_add_x_forwarded_for;
-      #   X-Forwarded-Proto $scheme;
-      # EOF      
+      "kubernetes.io/ingress.class" =  "nginx"   
     }  
   }
 
@@ -28,7 +22,7 @@ resource "kubernetes_ingress_v1" "ingress" {
     }     
 
     rule {
-      host = "account.greeta.net"
+      host = "movie.greeta.net"
       http {
 
         path {
@@ -108,13 +102,13 @@ resource "kubernetes_ingress_v1" "ingress" {
     } 
 
     rule {
-      host = "bank.greeta.net"
+      host = "ui.greeta.net"
       http {
 
         path {
           backend {
             service {
-              name = "bank-ui"
+              name = "movie-ui"
               port {
                 number = 4200
               }

@@ -26,12 +26,6 @@ spring:
         locator:
           enabled: true
       routes:
-        - id: employee
-          uri: http://employee:8080
-          predicates:
-            - Path=/employee/**
-          filters:
-            - RewritePath=/employee/(?<path>.*), /$\{path}
         - id: account-cmd
           uri: http://account-cmd:8080
           predicates:
@@ -43,13 +37,13 @@ spring:
           predicates:
             - Path=/account-query/**
           filters:
-            - RewritePath=/account-query/(?<path>.*), /$\{path}            
-        - id: bank
-          uri: http://bank:8080
+            - RewritePath=/account-query/(?<path>.*), /$\{path}
+        - id: movie
+          uri: http://movie:8080
           predicates:
-            - Path=/bank/**
+            - Path=/movie/**
           filters:
-            - RewritePath=/bank/(?<path>.*), /$\{path}
+            - RewritePath=/movie/(?<path>.*), /$\{path}
   keycloak:
       server-url: http://keycloak-server:8080
 
@@ -62,28 +56,24 @@ spring:
     store-type: redis
     timeout: 10m
     redis:
-      namespace: bank:gateway
+      namespace: movie:gateway
   security:
     oauth2: 
       resourceserver:
         jwt:
-          issuer-uri: https://keycloak.greeta.net/realms/bank-realm
-          jwk-set-uri: ${spring.keycloak.server-url}/realms/bank-realm/protocol/openid-connect/certs
+          issuer-uri: https://keycloak.greeta.net/realms/movie-realm
+          jwk-set-uri: ${spring.keycloak.server-url}/realms/movie-realm/protocol/openid-connect/certs
        
 
 jwt:
   auth:
     converter:
-      resource-id: bank-app
+      resource-id: movie-app
       principal-attribute: preferred_username
 
-account-app:
-  base-url: https://account.greeta.net
-  redirect-url: ${account-app.base-url}
-
-bank-app:
-  base-url: https://bank.greeta.net
-  redirect-url: ${bank-app.base-url}/dashboard
+movie-app:
+  base-url: https://movie.greeta.net
+  redirect-url: ${movie-app.base-url}/dashboard
 
 logging:
   pattern: 
@@ -109,10 +99,7 @@ springdoc:
         primaryName: Account Command Service
       - url: /account-query/v3/api-docs
         name: Account Query Service
-        primaryName: Account Query Service        
-      - url: /employee/v3/api-docs
-        name: Employee Service
-        primaryName: Employee Service
-      - url: /bank/v3/api-docs
-        name: Bank Service
-        primaryName: Bank Service
+        primaryName: Account Query Service
+      - url: /movie/v3/api-docs
+        name: Movie Service
+        primaryName: Movie Service
