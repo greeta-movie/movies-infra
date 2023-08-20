@@ -12,7 +12,7 @@ resource "kubernetes_ingress_v1" "ingress" {
       "alb.ingress.kubernetes.io/healthcheck-protocol" =  "HTTP"
       "alb.ingress.kubernetes.io/healthcheck-port" = "traffic-port"
       #Important Note:  Need to add health check path annotations in service level if we are planning to use multiple targets in a load balancer    
-      "alb.ingress.kubernetes.io/healthcheck-interval-seconds" = 15
+      "alb.ingress.kubernetes.io/healthcheck-interval-seconds" = 30
       "alb.ingress.kubernetes.io/healthcheck-timeout-seconds" = 15
       "alb.ingress.kubernetes.io/success-codes" = 200
       "alb.ingress.kubernetes.io/healthy-threshold-count" = 4
@@ -84,26 +84,6 @@ resource "kubernetes_ingress_v1" "ingress" {
         }
       }
     }    
-
-    rule {
-      host = "kafka.greeta.net"
-      http {
-
-        path {
-          backend {
-            service {
-              name = "kafka-ui"
-              port {
-                number = 8080
-              }
-            }
-          }
-
-          path = "/"
-          path_type = "Prefix"
-        }
-      }
-    }
 
     rule {
       host = "grafana.greeta.net"
