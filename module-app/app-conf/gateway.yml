@@ -73,7 +73,7 @@ jwt:
 
 movie-app:
   base-url: https://movie.greeta.net
-  redirect-url: ${movie-app.base-url}/dashboard
+  redirect-url: ${movie-app.base-url}/*
 
 logging:
   pattern: 

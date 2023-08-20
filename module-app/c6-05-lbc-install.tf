@@ -2,13 +2,13 @@
 
 # Resource: Helm Release 
 resource "helm_release" "loadbalancer_controller" {
-  depends_on = [aws_iam_role.lbc_iam_role]            
+  depends_on = [aws_iam_role.lbc_iam_role, helm_release.external_dns]
   name       = "aws-load-balancer-controller"
 
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
 
-  namespace = "default"     
+  namespace = "default"
 
   # Value changes based on your Region (Below is for us-east-1)
   set {
@@ -45,8 +45,8 @@ resource "helm_release" "loadbalancer_controller" {
   set {
     name  = "clusterName"
     value = "${var.cluster_id}"
-  }    
-    
+  }
+  
 }
 
 

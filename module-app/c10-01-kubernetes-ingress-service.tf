@@ -1,4 +1,5 @@
 resource "kubernetes_ingress_v1" "ingress" {
+  depends_on = [helm_release.loadbalancer_controller, helm_release.external_dns]
   wait_for_load_balancer = true
   metadata {
     name = "ingress-externaldns"
@@ -26,7 +27,7 @@ resource "kubernetes_ingress_v1" "ingress" {
       # SSL Redirect Setting
       "alb.ingress.kubernetes.io/ssl-redirect" = 443
       # External DNS - For creating a Record Set in Route53
-      "external-dns.alpha.kubernetes.io/hostname" = "movie.greeta.net, api.greeta.net, keycloak.greeta.net, grafana.greeta.net, kafka.greeta.net"
+      #"external-dns.alpha.kubernetes.io/hostname" = "movie.greeta.net, api.greeta.net, keycloak.greeta.net, grafana.greeta.net, kafka.greeta.net"
       "alb.ingress.kubernetes.io/target-type" = "ip"
     }  
   }
