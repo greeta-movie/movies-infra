@@ -13,10 +13,10 @@ resource "kubernetes_ingress_v1" "ingress" {
       "alb.ingress.kubernetes.io/healthcheck-port" = "traffic-port"
       #Important Note:  Need to add health check path annotations in service level if we are planning to use multiple targets in a load balancer    
       "alb.ingress.kubernetes.io/healthcheck-interval-seconds" = 15
-      "alb.ingress.kubernetes.io/healthcheck-timeout-seconds" = 5
+      "alb.ingress.kubernetes.io/healthcheck-timeout-seconds" = 15
       "alb.ingress.kubernetes.io/success-codes" = 200
-      "alb.ingress.kubernetes.io/healthy-threshold-count" = 2
-      "alb.ingress.kubernetes.io/unhealthy-threshold-count" = 2
+      "alb.ingress.kubernetes.io/healthy-threshold-count" = 4
+      "alb.ingress.kubernetes.io/unhealthy-threshold-count" = 4
       ## SSL Settings
       # Option-1: Using Terraform jsonencode Function
       "alb.ingress.kubernetes.io/listen-ports" = jsonencode([{"HTTPS" = 443}, {"HTTP" = 80}])
