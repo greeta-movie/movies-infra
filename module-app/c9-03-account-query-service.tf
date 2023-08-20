@@ -1,35 +1,23 @@
-resource "kubernetes_config_map_v1" "gateway" {
+resource "kubernetes_config_map_v1" "account_query" {
   metadata {
-    name      = "gateway"
+    name      = "account-query"
     labels = {
-      app = "gateway"
+      app = "account-query"
     }
   }
 
   data = {
-    "gateway.yml" = file("${path.module}/app-conf/gateway.yml")
-  }
-}
-
-resource "kubernetes_secret_v1" "gateway" {
-  metadata {
-    name = "gateway"
-  }
-
-  data = {
-    "spring.redis.host"     = "gateway-redis"
-    "spring.redis.port"     = "6379"
-    "spring.redis.username" = "default"
+    "application.yml" = file("${path.module}/app-conf/account-query.yml")
   }
 }
 
 
-resource "kubernetes_deployment_v1" "gateway_deployment" {
-  depends_on = [kubernetes_deployment_v1.gateway_redis_deployment]
+resource "kubernetes_deployment_v1" "account_query_deployment" {
+  depends_on = [kubernetes_deployment_v1.account_postgres]
   metadata {
-    name = "gateway"
+    name = "account-query"
     labels = {
-      app = "gateway"
+      app = "account-query"
     }
   }
  
@@ -37,13 +25,13 @@ resource "kubernetes_deployment_v1" "gateway_deployment" {
     replicas = 1
     selector {
       match_labels = {
-        app = "gateway"
+        app = "account-query"
       }
     }
     template {
       metadata {
         labels = {
-          app = "gateway"
+          app = "account-query"
         }
         annotations = {
           "prometheus.io/scrape" = "true"
@@ -51,35 +39,29 @@ resource "kubernetes_deployment_v1" "gateway_deployment" {
           "prometheus.io/port"   = "8080"
         }        
       }
+
       spec {
-        service_account_name = "spring-cloud-kubernetes"
 
-        volume {
-          name = "gateway-config-volume"    
-          config_map {
-            name = "gateway"
-          }
-        }
-
-        volume {
-          name = "gateway-secret-volume"
-          secret {
-            secret_name = "gateway"
-          }
-        }               
+        service_account_name = "spring-cloud-kubernetes"         
         
         container {
-          image = "ghcr.io/greeta-movie/gateway-service:50ef10d455d575d0761dc4e5a0ba4955932ddb99"
-          name  = "gateway"
+          image = "ghcr.io/greeta-movie/account-query-service:50ef10d455d575d0761dc4e5a0ba4955932ddb99"
+          name  = "account-query"
           image_pull_policy = "Always"
+
           port {
             container_port = 8080
           }
 
           env {
-            name  = "SPRING_CONFIG_LOCATION"
-            value = "classpath:application.yml,file:/config-repo/gateway.yml"
-          } 
+            name  = "SPRING_CLOUD_BOOTSTRAP_ENABLED"
+            value = "true"
+          }
+
+          env {
+            name  = "SPRING_CLOUD_KUBERNETES_SECRETS_ENABLEAPI"
+            value = "true"
+          }
 
           env {
             name  = "JAVA_TOOL_OPTIONS"
@@ -88,7 +70,7 @@ resource "kubernetes_deployment_v1" "gateway_deployment" {
 
           env {
             name  = "OTEL_SERVICE_NAME"
-            value = "gateway"
+            value = "account-query"
           }
 
           env {
@@ -99,7 +81,7 @@ resource "kubernetes_deployment_v1" "gateway_deployment" {
           env {
             name  = "OTEL_METRICS_EXPORTER"
             value = "none"
-          }       
+          }
 
           # resources {
           #   requests = {
@@ -110,7 +92,7 @@ resource "kubernetes_deployment_v1" "gateway_deployment" {
           #     memory = "756Mi"
           #     cpu    = "2"
           #   }
-          # }          
+          # }
 
           lifecycle {
             pre_stop {
@@ -119,7 +101,7 @@ resource "kubernetes_deployment_v1" "gateway_deployment" {
               }
             }
           }
-
+          
           # liveness_probe {
           #   http_get {
           #     path = "/actuator/health/liveness"
@@ -136,28 +118,17 @@ resource "kubernetes_deployment_v1" "gateway_deployment" {
           #   }
           #   initial_delay_seconds = 20
           #   period_seconds        = 15
-          # }                           
-
-          volume_mount {
-            name       = "gateway-config-volume"
-            mount_path = "/config-repo"
-          }
-
-          volume_mount {
-            name      = "gateway-secret-volume"
-            mount_path = "/workspace/secrets/redis"
-          }             
- 
+          # }      
+                               
         }
-
       }
     }
   }
 }
 
-resource "kubernetes_horizontal_pod_autoscaler_v1" "gateway_hpa" {
+resource "kubernetes_horizontal_pod_autoscaler_v1" "account_query_hpa" {
   metadata {
-    name = "gateway-hpa"
+    name = "account-query-hpa"
   }
   spec {
     max_replicas = 2
@@ -165,19 +136,19 @@ resource "kubernetes_horizontal_pod_autoscaler_v1" "gateway_hpa" {
     scale_target_ref {
       api_version = "apps/v1"
       kind = "Deployment"
-      name = kubernetes_deployment_v1.gateway_deployment.metadata[0].name 
+      name = kubernetes_deployment_v1.account_query_deployment.metadata[0].name 
     }
     target_cpu_utilization_percentage = 70
   }
 }
 
-resource "kubernetes_service_v1" "gateway_service" {
+resource "kubernetes_service_v1" "account_query_service" {
   metadata {
-    name = "gateway"
+    name = "account-query"
   }
   spec {
     selector = {
-      app = "gateway"
+      app = "account-query"
     }
     port {
       port = 8080
