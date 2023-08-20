@@ -26,18 +26,35 @@ resource "aws_security_group" "efs_allow_access" {
 
 
 # Resource: EFS File System Temporary Swap Resource☺☺
-resource "aws_efs_file_system" "efs_file_system" {
-  creation_token = "efs-movies"
+resource "aws_efs_file_system" "efs_keycloak_file_system" {
+  creation_token = "efs-keycloak"
   tags = {
-    Name = "efs-movies"
+    Name = "efs-keycloak"
   }
 }
 
 # Resource: EFS Mount Target
-resource "aws_efs_mount_target" "efs_mount_target" {
+resource "aws_efs_mount_target" "efs_keycloak_mount_target" {
   #for_each = toset(module.vpc.private_subnets)
   count = var.vpc_public_subnets_count
-  file_system_id = aws_efs_file_system.efs_file_system.id
+  file_system_id = aws_efs_file_system.efs_keycloak_file_system.id
+  subnet_id      = var.vpc_public_subnets[count.index]
+  security_groups = [ aws_security_group.efs_allow_access.id ]
+}
+
+# Resource: EFS File System Temporary Swap Resource☺☺
+resource "aws_efs_file_system" "efs_mongodb_file_system" {
+  creation_token = "efs-mongodb"
+  tags = {
+    Name = "efs-mongodb"
+  }
+}
+
+# Resource: EFS Mount Target
+resource "aws_efs_mount_target" "efs_mongodb_mount_target" {
+  #for_each = toset(module.vpc.private_subnets)
+  count = var.vpc_public_subnets_count
+  file_system_id = aws_efs_file_system.efs_mongodb_file_system.id
   subnet_id      = var.vpc_public_subnets[count.index]
   security_groups = [ aws_security_group.efs_allow_access.id ]
 }
