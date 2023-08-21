@@ -1,23 +1,22 @@
-resource "kubernetes_config_map_v1" "account_query" {
+resource "kubernetes_config_map_v1" "movie" {
   metadata {
-    name      = "account-query"
+    name      = "movie"
     labels = {
-      app = "account-query"
+      app = "movie"
     }
   }
 
   data = {
-    "application.yml" = file("${path.module}/app-conf/account-query.yml")
+    "application.yml" = file("${path.module}/app-conf/movie.yml")
   }
 }
 
-
-resource "kubernetes_deployment_v1" "account_query_deployment" {
-  depends_on = [kubernetes_deployment_v1.account_postgres]
+resource "kubernetes_deployment_v1" "movie_deployment" {
+  depends_on = [kubernetes_deployment_v1.movies_mongodb_deployment]
   metadata {
-    name = "account-query"
+    name = "movie"
     labels = {
-      app = "account-query"
+      app = "movie"
     }
   }
  
@@ -25,13 +24,13 @@ resource "kubernetes_deployment_v1" "account_query_deployment" {
     replicas = 1
     selector {
       match_labels = {
-        app = "account-query"
+        app = "movie"
       }
     }
     template {
       metadata {
         labels = {
-          app = "account-query"
+          app = "movie"
         }
         annotations = {
           "prometheus.io/scrape" = "true"
@@ -39,20 +38,20 @@ resource "kubernetes_deployment_v1" "account_query_deployment" {
           "prometheus.io/port"   = "8080"
         }        
       }
-
       spec {
-
-        service_account_name = "spring-cloud-kubernetes"         
+        service_account_name = "spring-cloud-kubernetes"      
         
         container {
-          image = "ghcr.io/greeta-movie/account-query-service:8c49e565256cc40db4232c72b4ee51594bb598bd"
-          name  = "account-query"
+          image = "ghcr.io/greeta-movie/movie-service:50ef10d455d575d0761dc4e5a0ba4955932ddb99"
+          name  = "movie"
           image_pull_policy = "Always"
-
           port {
             container_port = 8080
           }
-
+          env {
+            name = "SPRING_DATA_MONGODB_URI"
+            value = "mongodb://movies-mongodb:27017/moviesdb"
+          }            
           env {
             name  = "SPRING_CLOUD_BOOTSTRAP_ENABLED"
             value = "true"
@@ -70,7 +69,7 @@ resource "kubernetes_deployment_v1" "account_query_deployment" {
 
           env {
             name  = "OTEL_SERVICE_NAME"
-            value = "account-query"
+            value = "movie"
           }
 
           env {
@@ -92,7 +91,7 @@ resource "kubernetes_deployment_v1" "account_query_deployment" {
           #     memory = "756Mi"
           #     cpu    = "2"
           #   }
-          # }
+          # }          
 
           lifecycle {
             pre_stop {
@@ -101,7 +100,7 @@ resource "kubernetes_deployment_v1" "account_query_deployment" {
               }
             }
           }
-          
+
           # liveness_probe {
           #   http_get {
           #     path = "/actuator/health/liveness"
@@ -118,17 +117,17 @@ resource "kubernetes_deployment_v1" "account_query_deployment" {
           #   }
           #   initial_delay_seconds = 20
           #   period_seconds        = 15
-          # }      
-                               
+          # }  
+         
         }
       }
     }
   }
 }
 
-resource "kubernetes_horizontal_pod_autoscaler_v1" "account_query_hpa" {
+resource "kubernetes_horizontal_pod_autoscaler_v1" "movie_hpa" {
   metadata {
-    name = "account-query-hpa"
+    name = "movie-hpa"
   }
   spec {
     max_replicas = 2
@@ -136,19 +135,23 @@ resource "kubernetes_horizontal_pod_autoscaler_v1" "account_query_hpa" {
     scale_target_ref {
       api_version = "apps/v1"
       kind = "Deployment"
-      name = kubernetes_deployment_v1.account_query_deployment.metadata[0].name 
+      name = kubernetes_deployment_v1.movie_deployment.metadata[0].name 
     }
     target_cpu_utilization_percentage = 70
   }
 }
 
-resource "kubernetes_service_v1" "account_query_service" {
+resource "kubernetes_service_v1" "movie_service" {
   metadata {
-    name = "account-query"
+    name = "movie"
+    labels = {
+      app = "movie"
+      spring-boot = "true"
+    }
   }
   spec {
     selector = {
-      app = "account-query"
+      app = "movie"
     }
     port {
       port = 8080

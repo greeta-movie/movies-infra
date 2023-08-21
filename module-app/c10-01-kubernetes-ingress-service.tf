@@ -92,7 +92,7 @@ resource "kubernetes_ingress_v1" "ingress" {
         path {
           backend {
             service {
-              name = "loki-stack-grafana-bridge"
+              name = "loki-stack-grafana"
               port {
                 number = 80
               }
