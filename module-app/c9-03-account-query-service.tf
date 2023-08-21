@@ -45,7 +45,7 @@ resource "kubernetes_deployment_v1" "account_query_deployment" {
         service_account_name = "spring-cloud-kubernetes"         
         
         container {
-          image = "ghcr.io/greeta-movie/account-query-service:8c49e565256cc40db4232c72b4ee51594bb598bd"
+          image = "ghcr.io/greeta-movie/account-query-service:b61cdd336155dce8eb03c6065b840e08efb24bb7"
           name  = "account-query"
           image_pull_policy = "Always"
 
